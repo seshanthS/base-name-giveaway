@@ -1,36 +1,19 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import {
   ConnectWallet,
   Wallet,
-  WalletContextType,
-  WalletDropdown,
-  WalletDropdownLink,
-  WalletDropdownDisconnect,
 } from '@coinbase/onchainkit/wallet';
 import {
-  Address,
   Avatar,
   Name,
-  Identity,
-  EthBalance,
-  getAddress,
 } from '@coinbase/onchainkit/identity';
-import ArrowSvg from './svg/ArrowSvg';
-import ImageSvg from './svg/Image';
-import OnchainkitSvg from './svg/OnchainKit';
-import { border, pressable, text as dsText, color, cn } from '@coinbase/onchainkit/theme';
 import { Transaction, TransactionButton, TransactionSponsor, TransactionToast, TransactionToastAction, TransactionToastIcon, TransactionToastLabel } from '@coinbase/onchainkit/transaction';
-import { createPublicClient, http } from 'viem'
-import { mainnet } from 'viem/chains'
-import { addEnsContracts, ensPublicActions } from '@ensdomains/ensjs'
-import { getAddressRecord } from '@ensdomains/ensjs/public'
 import { Dispatch, FC, SetStateAction, useCallback, useEffect, useState } from 'react';
 import { ethers } from 'ethers';
 import { AddressLike } from 'ethers';
-import FormWizard from "react-form-wizard-component";
 import "react-form-wizard-component/dist/style.css";
-import { address } from 'framer-motion/client';
 import { useAccount } from 'wagmi';
 import OpenAI from 'openai';
 
@@ -44,10 +27,10 @@ const openAi = new OpenAI({
 // import { useWizard, Wizard } from 'react-use-wizard';
 // import { AnimatePresence } from 'framer-motion';
 
-const clientWithEns = createPublicClient({
-  chain: addEnsContracts(mainnet),
-  transport: http(),
-}).extend(ensPublicActions)
+// const clientWithEns = createPublicClient({
+//   chain: addEnsContracts(mainnet),
+//   transport: http(),
+// }).extend(ensPublicActions)
 
 type Question = {
   id: number;
@@ -174,7 +157,6 @@ export default function App() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const { address: accountAddress } = useAccount()
-  const [isWalletConnected, setIsWalletConnected] = useState(false);
   const [suggestedNames, setSuggestedNames] = useState<string[]>([]);
   const [preferredName, setPreferredName] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -208,6 +190,7 @@ export default function App() {
 
         const parsedQuestions = JSON.parse(response);
 
+
         const formattedQuestions = parsedQuestions.map((q: any, index: number) => ({
           id: index + 1,
           text: q.question,
@@ -224,21 +207,6 @@ export default function App() {
     }
 
     getQuestions();
-  }, [])
-
-  const removeAlreadyRegisteredNames = useCallback(async (names: string[]) => {
-    if (!names.length) {
-      return
-    }
-
-    const data = names.map((name) => {
-      return getAddressRecord.batch({ name })
-    })
-
-    const ensAddresses = await clientWithEns.ensBatch(
-      ...data
-    )
-
   }, [])
 
 
@@ -326,6 +294,9 @@ export default function App() {
   useEffect(() => {
     const calldataMethod = async () => {
       const calldata = await getCalldata(preferredName, accountAddress)
+      if (!calldata) {
+        return
+      }
       setCalls([{
         to: '0x4cCb0BB02FCABA27e82a56646E81d8c5bC4119a5',  // ens registry address
         data: calldata,
@@ -404,6 +375,8 @@ export default function App() {
                   url: 'https://api.developer.coinbase.com/rpc/v1/base/QTiVvqiGi1npdMJig25XpUz0AGCcIXYz',
                 },
               }}
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+              //@ts-ignore
               calls={calls}
               onStatus={s => { console.log('status', s) }}
               onError={e => console.log('error', e)}
